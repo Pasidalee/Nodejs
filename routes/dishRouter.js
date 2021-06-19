@@ -3,6 +3,7 @@ const bodyParser=require('body-parser');
 const mongoose=require('mongoose');
 const Dishes=require('../models/dishes');
 const dishRoute=express.Router();
+const authenticate=require('../authenticate');
 
 dishRoute.use(bodyParser.json());
 
@@ -16,7 +17,7 @@ dishRoute.route('/')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.create(req.body)
 	.then((dish)=>{
 		console.log('dish created');
@@ -27,12 +28,12 @@ dishRoute.route('/')
 	.catch((err)=>next(err));
 
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
 	
 	res.statusCode=404;
 	res.end("put method is not supported. you cannot modify the list");
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.remove({})
 	.then((result)=>{
 		res.statusCode=200;
@@ -56,11 +57,11 @@ dishRoute.route('/:dishId')
 	.catch((err)=>next(err));
 
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
 	res.statusCode=404;
 	res.end("post method is not supported");
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findByIdAndUpdate(req.params.dishId,{$set:req.body},{new:true}).exec()
 	.then((dish)=>{
 		res.statusCode=200;
@@ -69,7 +70,7 @@ dishRoute.route('/:dishId')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findByIdAndRemove(req.params.dishId)
 	.then((dish)=>{
 		res.statusCode=200;
@@ -95,7 +96,7 @@ dishRoute.route('/:dishId/comments')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 		if(dish != null){
@@ -116,12 +117,12 @@ dishRoute.route('/:dishId/comments')
 	.catch((err)=>next(err));
 
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
 	
 	res.statusCode=404;
 	res.end("put method is not supported. you cannot modify the list");
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 		if(dish !=null){
@@ -170,11 +171,11 @@ dishRoute.route('/:dishId/comments/:commentId')
 	.catch((err)=>next(err));
 
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,(req,res,next)=>{
 	res.statusCode=404;
 	res.end("post method is not supported");
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 		if(dish != null && dish.comments.id(req.params.commentId)!=null){
@@ -204,7 +205,7 @@ dishRoute.route('/:dishId/comments/:commentId')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 		if(dish != null && dish.comments.id(req.params.commentId)!=null){
