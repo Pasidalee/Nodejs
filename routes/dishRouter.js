@@ -18,7 +18,7 @@ dishRoute.route('/')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.create(req.body)
 	.then((dish)=>{
 		console.log('dish created');
@@ -29,12 +29,12 @@ dishRoute.route('/')
 	.catch((err)=>next(err));
 
 })
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	
 	res.statusCode=404;
 	res.end("put method is not supported. you cannot modify the list");
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.remove({})
 	.then((result)=>{
 		res.statusCode=200;
@@ -59,11 +59,11 @@ dishRoute.route('/:dishId')
 	.catch((err)=>next(err));
 
 })
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	res.statusCode=404;
 	res.end("post method is not supported");
 })
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findByIdAndUpdate(req.params.dishId,{$set:req.body},{new:true}).exec()
 	.then((dish)=>{
 		res.statusCode=200;
@@ -72,7 +72,7 @@ dishRoute.route('/:dishId')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findByIdAndRemove(req.params.dishId)
 	.then((dish)=>{
 		res.statusCode=200;
@@ -131,7 +131,7 @@ dishRoute.route('/:dishId/comments')
 	res.statusCode=404;
 	res.end("put method is not supported. you cannot modify the list");
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
 	.then((dish)=>{
 		if(dish !=null){
@@ -187,25 +187,33 @@ dishRoute.route('/:dishId/comments/:commentId')
 })
 .put(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
+	.populate('comments.author')
 	.then((dish)=>{
 		if(dish != null && dish.comments.id(req.params.commentId)!=null){
-			if(req.body.rating){
-				dish.comments.id(req.params.commentId).rating=req.body.rating;
-			}
-			if(req.body.comment){
-				dish.comments.id(req.params.commentId).comment=req.body.comment;
-			}
-			dish.save()
-			.then((dish)=>{
-				Dishes.findById(dish._id)
-				.populate('comments.author')
+			if(req.user._id.equals(dish.comments.id(req.params.commentId).author._id)){
+				if(req.body.rating){
+					dish.comments.id(req.params.commentId).rating=req.body.rating;
+				}
+				if(req.body.comment){
+					dish.comments.id(req.params.commentId).comment=req.body.comment;
+				}
+				dish.save()
 				.then((dish)=>{
-					res.statusCode=200;
-					res.setHeader('Content-Type','application/json');
-					res.json(dish);
-				})
-			
-		},(err)=>next(err));
+					Dishes.findById(dish._id)
+					.populate('comments.author')
+					.then((dish)=>{
+						res.statusCode=200;
+						res.setHeader('Content-Type','application/json');
+						res.json(dish);
+					})
+				
+			},(err)=>next(err));
+			}
+			else{
+				err=new Error("You are not allowed to change the comment");
+				err.statusCode=403;
+				return next(err);
+			}			
 		}
 		else if(dish==null) {
 			err=new Error("Dish with the dish Id"+req.params.dishId+"not found");
@@ -222,19 +230,27 @@ dishRoute.route('/:dishId/comments/:commentId')
 })
 .delete(authenticate.verifyUser,(req,res,next)=>{
 	Dishes.findById(req.params.dishId)
+	.populate('comments.author')
 	.then((dish)=>{
 		if(dish != null && dish.comments.id(req.params.commentId)!=null){
-			dish.comments.id(req.params.commentId).remove();
-			dish.save()
-			.then((dish)=>{
-				Dishes.findById(dish._id)
-				.populate('comments.author').
-				then((dish)=>{
-					res.statusCode=200;
-					res.setHeader('Content-Type', 'application/json');
-					res.json(dish);
-				})				
-			},(err)=>next(err));
+			if(req.user._id.equals(dish.comments.id(req.params.commentId).author._id)){
+				dish.comments.id(req.params.commentId).remove();
+				dish.save()
+				.then((dish)=>{
+					Dishes.findById(dish._id)
+					.populate('comments.author').
+					then((dish)=>{
+						res.statusCode=200;
+						res.setHeader('Content-Type', 'application/json');
+						res.json(dish);
+					})				
+				},(err)=>next(err));
+			}
+			else{
+				err=new Error("You are not allowed to change the comment");
+				err.statusCode=403;
+				return next(err);
+			}
 		}
 		else if(dish==null) {
 			err=new Error("Dish with the dish Id"+req.params.dishId+"not found");

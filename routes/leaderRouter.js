@@ -5,6 +5,7 @@ const leaderRoute=express.Router();
 const Leaders=require('../models/leaders');
 
 leaderRoute.use(bodyParser.json());
+var authenticate=require('../authenticate');
 
 
 
@@ -18,7 +19,7 @@ leaderRoute.route('/')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Leaders.create(req.body)
 	.then((leader)=>{
 		console.log('dish created');
@@ -29,12 +30,12 @@ leaderRoute.route('/')
 	.catch((err)=>next(err));
 
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	
 	res.statusCode=404;
 	res.end("put method is not supported. you cannot modify the list");
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Leaders.remove({})
 	.then((result)=>{
 		res.statusCode=200;
@@ -47,7 +48,7 @@ leaderRoute.route('/')
 
 
 
-dishRoute.route('/:leaderId')
+leaderRoute.route('/:leaderId')
 .get((req,res,next)=>{
 	Dishes.findById(req.params.leaderId)
 	.then((leader)=>{
@@ -58,11 +59,11 @@ dishRoute.route('/:leaderId')
 	.catch((err)=>next(err));
 
 })
-.post((req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	res.statusCode=404;
 	res.end("post method is not supported");
 })
-.put((req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findByIdAndUpdate(req.params.leaderId,{$set:req.body},{new:true}).exec()
 	.then((leader)=>{
 		res.statusCode=200;
@@ -71,7 +72,7 @@ dishRoute.route('/:leaderId')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.delete((req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findByIdAndRemove(req.params.leaderId)
 	.then((leader)=>{
 		res.statusCode=200;

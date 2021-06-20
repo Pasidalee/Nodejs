@@ -19,7 +19,7 @@ promotionRoute.route('/')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Promotions.create(req.body)
 	.then((promotion)=>{
 		console.log('dish created');
@@ -30,12 +30,12 @@ promotionRoute.route('/')
 	.catch((err)=>next(err));
 
 })
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	
 	res.statusCode=404;
 	res.end("put method is not supported. you cannot modify the list");
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Promotions.remove({})
 	.then((result)=>{
 		res.statusCode=200;
@@ -59,11 +59,11 @@ promotionRoute.route('/:promoId')
 	.catch((err)=>next(err));
 
 })
-.post(authenticate.verifyUser,(req,res,next)=>{
+.post(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	res.statusCode=404;
 	res.end("post method is not supported");
 })
-.put(authenticate.verifyUser,(req,res,next)=>{
+.put(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findByIdAndUpdate(req.params.promoId,{$set:req.body},{new:true}).exec()
 	.then((promotion)=>{
 		res.statusCode=200;
@@ -72,7 +72,7 @@ promotionRoute.route('/:promoId')
 	},(err)=>next(err))
 	.catch((err)=>next(err));
 })
-.delete(authenticate.verifyUser,(req,res,next)=>{
+.delete(authenticate.verifyUser,authenticate.verifyAdmin,(req,res,next)=>{
 	Dishes.findByIdAndRemove(req.params.promoId)
 	.then((promotion)=>{
 		res.statusCode=200;
